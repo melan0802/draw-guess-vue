@@ -6,6 +6,8 @@
       @mousemove.native="drawing"
       @mouseup.native="endDraw"
     />
+    <div class="topic">{{topic}}</div>
+    <div class="game-time">{{gameTime}}</div>
     <div class="controller-bar">
       <div class="brush-wrap">
         <div
@@ -44,7 +46,7 @@
 
 <script>
 import MxCanvas from '@/components/mx-canvas'
-import axios from 'axios'
+import axios from '@/utils/axios'
 export default {
   name: 'Draw',
   components: {
@@ -65,12 +67,24 @@ export default {
         '#000000', '#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#4b0082', '#ee82ee'
       ],
       currentBrushWidth: 3,
-      currentBrushColor: '#000000'
+      currentBrushColor: '#000000',
+      topic: '',
+      gameTime: 60
     }
   },
   created() {
     this.ws = new WebSocket('ws://localhost:8090')
-    axios.get('http://localhost:3000/api/username').then(res => {
+    this.ws.onmessage = msg => {
+      if (msg.data.match(/^startgame:/)) {
+        this.$refs.canvas.clear()
+        axios.get('/api/topic').then(res => {
+          this.topic = res.data
+        })
+      } else if (msg.data.match(/^timedown:/)) {
+        this.gameTime = msg.data.slice(9)
+      }
+    }
+    axios.get('/api/username').then(res => {
       this.username = res.data
     })
   },
@@ -109,6 +123,30 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.draw {
+  position: relative;
+  margin: 0 auto;
+  width: 1200px;
+  .topic {
+    position: absolute;
+    top: 10px;
+    left: 70px;
+  }
+  .game-time {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 66px;
+    height: 66px;
+    line-height: 66px;
+    text-align: center;
+    border-radius: 50%;
+    color: red;
+    font-weight: bold;
+    font-size: 18px;
+    border: 1px solid #000;
+  }
+}
 .brush {
   display: inline-block;
   width: 40px;

@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from '@/utils/axios'
 export default {
   name: 'Login',
   data() {
@@ -17,7 +17,7 @@ export default {
   },
   methods: {
     login() {
-      axios.post('http://localhost:3000/api/login', {username: this.username}).then(res => {
+      axios.post('/api/login', {username: this.username}).then(res => {
         if (res.data.success) {
           this.$router.push('/')
         }

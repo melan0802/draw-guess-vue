@@ -34,10 +34,13 @@ export default {
     },
     endDraw() {
       this.ctx.closePath()
+    },
+    clear() {
+      this.ctx.clearRect(0, 0, this.$el.width, this.$el.height);
     }
   },
   mounted() {
-    const canvas = this.$el
+    var canvas = this.$el
     this.ctx = canvas.getContext('2d')
   }
 }

@@ -1,6 +1,7 @@
 import guess from '@/pages/guess'
 import draw from '@/pages/draw'
 import login from '@/pages/login'
+import random from '@/pages/random'
 
 const routes = [
   {
@@ -9,6 +10,9 @@ const routes = [
   }, {
     path: '/login',
     component: login
+  }, {
+    path: '/random',
+    component: random
   }, {
     path: '/',
     component: guess
