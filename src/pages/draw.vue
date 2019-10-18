@@ -6,6 +6,14 @@
       @mousemove.native="drawing"
       @mouseup.native="endDraw"
     />
+    <div class="chat-box">
+      <div class="chat-wrap">
+        <div class="chat" v-for="(msg, index) in msgs" :key="`chat_${index}`" :class="{'bingo': msg.bingo}">
+          <span class="chat__name">{{msg.username}}</span>：
+          <span class="chat__msg">{{msg.message}}</span>
+        </div>
+      </div>
+    </div>
     <div class="topic">{{topic}}</div>
     <div class="game-time">{{gameTime}}</div>
     <div class="controller-bar">
@@ -30,6 +38,7 @@
           ></span>
         </div>
       </div>
+      <button @click="clear">清空</button>
       <div class="brush-color-wrap">
         <div
           v-for="(color, index) in brushColorList"
@@ -54,6 +63,7 @@ export default {
   },
   data() {
     return {
+      msgs: [],
       isMousedown: false,
       ws: null,
       brushWidthList: [
@@ -73,7 +83,8 @@ export default {
     }
   },
   created() {
-    this.ws = new WebSocket('ws://localhost:8090')
+    this.ws = new WebSocket('ws://172.16.10.108:8090')
+    var chatWrap = document.getElementsByClassName('chat-wrap')[0]
     this.ws.onmessage = msg => {
       if (msg.data.match(/^startgame:/)) {
         this.$refs.canvas.clear()
@@ -82,6 +93,15 @@ export default {
         })
       } else if (msg.data.match(/^timedown:/)) {
         this.gameTime = msg.data.slice(9)
+      } else if (msg.data.match(/^bingo:/)) {
+        var msgObj = JSON.parse(msg.data.slice(6))
+        alert(msgObj.username + '猜对了')
+      } else if (msg.data.match(/^msg:/)) {
+        this.msgs.push(JSON.parse(msg.data.slice(4)))
+        if (this.msgs.length > 200) {
+          this.msgs.shift()
+        }
+        chatWrap.scrollTop = chatWrap.scrollHeight
       }
     }
     axios.get('/api/username').then(res => {
@@ -89,16 +109,21 @@ export default {
     })
   },
   methods: {
+    clear() {
+      this.$refs.canvas.clear()
+    },
     startDraw(e) {
-      const pathObj = {
-        x: e.offsetX,
-        y: e.offsetY,
-        lineWidth: this.currentBrushWidth,
-        color: this.currentBrushColor
+      if (e.button === 0) {
+        const pathObj = {
+          x: e.offsetX,
+          y: e.offsetY,
+          lineWidth: this.currentBrushWidth,
+          color: this.currentBrushColor
+        }
+        this.isMousedown = true
+        this.$refs.canvas.startDraw(pathObj)
+        this.ws.send('startdraw:' + JSON.stringify(pathObj))
       }
-      this.isMousedown = true
-      this.$refs.canvas.startDraw(pathObj)
-      this.ws.send('startdraw:' + JSON.stringify(pathObj))
     },
     drawing(e) {
       if (!this.isMousedown) {
@@ -165,6 +190,11 @@ export default {
     vertical-align: middle;
   }
 }
+.controller-bar {
+  display: flex;
+  width: 800px;
+  justify-content: space-between;
+}
 .brush-color-wrap {
   .brush-color {
     display: inline-block;
@@ -177,4 +207,44 @@ export default {
     }
   }
 }
+.chat-box {
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    width: 300px;
+    height: 600px;
+    border: 1px solid #000;
+
+    .chat-wrap {
+      overflow-y: scroll;
+      height: 500px;
+
+      .chat {
+        &.bingo {
+          color: red;
+        }
+      }
+    }
+
+    &__input {
+      position: absolute;
+      bottom: 0;
+
+      .input {
+        width: 200px;
+        padding: 0 10px;
+        line-height: 25px;
+        outline: 0;
+        border: 1px solid #000;
+      }
+
+      .send-msg-btn {
+        padding: 0 7px;
+        line-height: 25px;
+        border: 1px solid #000;
+        outline: 0;
+        background-color: #ffffff;
+      }
+    }
+  }
 </style>

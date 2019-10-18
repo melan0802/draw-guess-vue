@@ -4,7 +4,22 @@
     <div>
       <button @click="startSelect">选择</button>
       <button @click="startGame">开始</button>
+      <button @click="viewBoard">查看排行</button>
     </div>
+    <table class="board" v-show="boardVisible">
+      <thead>
+        <th>
+          <td>username</td>
+          <td>score</td>
+        </th>
+      </thead>
+      <tbody>
+        <tr v-for="(scoreItem, index) in score" :key="`score-item-${index}`">
+          <td>{{scoreItem.username}}</td>
+          <td>{{scoreItem.score}}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -15,10 +30,18 @@ export default {
   data() {
     return {
       username: '',
-      ensure: false
+      ensure: false,
+      boardVisible: false,
+      score: []
     }
   },
   methods: {
+    viewBoard() {
+      axios.get('/api/score').then(res => {
+        this.score = res.data
+        this.boardVisible = true
+      })
+    },
     startSelect() {
       axios.get('/api/usernames').then(res => {
         var nameList = res.data

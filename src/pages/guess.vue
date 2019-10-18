@@ -5,6 +5,9 @@
     <div class="tip" v-if="tipObj">
       第<span class="tip__important">{{tipObj.index}}</span>个提示：<span class="tip__important">{{tipObj.tip}}</span>
     </div>
+    <div class="tip" v-if="timeoutObj">
+      无人猜对，正确答案是<span class="tip__important">{{timeoutObj.topic}}</span>
+    </div>
     <div class="chat-box">
       <div class="chat-wrap">
         <div class="chat" v-for="(msg, index) in msgs" :key="`chat_${index}`" :class="{'bingo': msg.bingo}">
@@ -40,11 +43,12 @@ export default {
       msgs: [],
       message: '',
       tipObj: null,
-      gameTime: 60
+      gameTime: 60,
+      timeoutObj: null
     }
   },
   created() {
-    this.ws = new WebSocket('ws://localhost:8090')
+    this.ws = new WebSocket('ws://172.16.10.108:8090')
     this.ws.onmessage = msg => {
       var pathObj = null
       var msgObj = null
@@ -90,19 +94,27 @@ export default {
           break
         case Boolean(msg.data.match(/^startgame:/)):
           this.$refs.canvas.clear()
+          this.timeoutObj = null
+          this.tipObj = null
+          break
+        case Boolean(msg.data.match(/^timeout:/)):
+          this.tipObj = null
+          this.timeoutObj = JSON.parse(msg.data.slice(8))
           break
       }
     }
   },
   methods: {
     sendMsg() {
-      axios.post('/api/message', {
-        message: this.message
-      }).then(res => {
-        if (res.status === 200) {
-          this.message = ''
-        }
-      })
+      if (this.message) {
+        axios.post('/api/message', {
+          message: this.message
+        }).then(res => {
+          if (res.status === 200) {
+            this.message = ''
+          }
+        })
+      }
     }
   }
 }
